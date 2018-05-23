@@ -48,6 +48,9 @@ public:
 int main (int argc, char *argv[]) {
     string input_path;
     string output_path;
+
+    int num_thread = 1;
+
     int D;
     int N;
     int K;
@@ -71,6 +74,7 @@ int main (int argc, char *argv[]) {
     (",K", po::value(&K)->default_value(20), "number of nearest neighbor")
     ("fast", "use fast configuration (less accurate)")
     ("control", po::value(&control)->default_value(0), "number of control points")
+    ("numthread", po::value(&num_thread)->default_value(8), "number of openMP thread")
     ("dim,D", po::value(&D), "dimension, see format")
     ("number,N", po::value(&N), "number, number fo vector")
     ("skip", po::value(&skip)->default_value(0), "see format")
@@ -136,6 +140,8 @@ int main (int argc, char *argv[]) {
     FloatDataset data(D, N);
     data.loadFvecs(input_path);
     assert( N == data.size());
+
+    omp_set_num_threads(num_thread);
 
     OracleL2<FloatDataset> oracle(data);
 
