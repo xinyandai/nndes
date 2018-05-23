@@ -1,0 +1,15 @@
+* Gaussian noise
+
+The performance of the algorithm degrades when it is common for points to have
+equally good neighbors. An example is points from a regular grid in 2-D space;
+the four immediate neighbors of each points are equally good.  In such case,
+random Gaussian noise can be injected into the dataset to make an arbitrary
+ranking of equally good neighbors.  The parameter "--noise" is used for this
+purpose.  When the parameter "--noise v" presents, the standard deviation
+"sigma" of the values in the dataset is computed, then a Gaussian noise with
+standard deviation of "sigma * v" is added to each value.  If bad performance
+is actually caused by this reason, a very small noise (1e-6) is sufficient to
+make huge difference.  Note that the control is computed after noise injection,
+so the performance should not be reported as the performance on the original
+data.  Rather, it indicates that recall is not a fair measure for the original
+data.

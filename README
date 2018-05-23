@@ -1,0 +1,176 @@
+NNDES: A Library for Efficient K-NN Graph Construction
+
+Wei Dong    wdong@wdong.org
+
+Copyright (C) 2010,2011 Wei Dong <wdong@wdong.org>.
+
+0. IMPORTANT INFORMATION FOR USERS OF AN EARLIER RELEASE
+
+The meaning of the parameter S of the NNDescent constructor
+has been changed from an absolute number to a sample rate to
+be consistent with the standalone program.
+
+1. Background
+
+This package implements the NN-Descent algorithm [1].  Given a set of
+objects and a similarity measure, the algrorithm simultaneusly finds
+(approximately) the k objects most similar to each objects.
+
+The standalone program supports dense vectors with L2 distance only.
+The library supports arbitrary similarity measures.
+
+THIS SOFTWARE DOES NOT HAVE ANY GUARANTEE ON THE ACCURACY OF THE
+RESULT.  USE THE CONTROL (SEE SECTION 3) TO ESTIMATE THE EMPIRICAL ACCURACY.
+
+2. Building
+
+This package is coded in C++ and depends on the following library:
+
+    * Boost > 1.41 (assert, random, progress, program_options)
+
+To build the package, edit Makefile to reflect your environment and type
+"make".
+
+3. Using the Program
+
+Usage: nndes {-D DIMENSION | --lshkit} [OTHER OPTIONS]... INPUT [OUTPUT]
+
+General options:
+  -h [ --help ]         produce help message.
+  --input arg           input path
+  --output arg          output path
+  -K [ -- ] arg (=20)   number of nearest neighbor
+  --fast                use fast configuration (less accurate)
+  --control arg (=0)    number of control points
+  -D [ --dim ] arg      dimension, see format
+  --skip arg (=0)       see format
+  --gap arg (=0)        see format
+  --lshkit              use LSHKIT data format
+
+Input Format:
+  The INPUT file is parsed as a architecture-dependent binary file.  The
+  initial <skip> bytes are skipped.  After that, every <D * sizeof(float)>
+  bytes are read as a D-dimensional vector.  There could be an optional
+  <gap>-byte gap between each vectors.  Therefore, the program expect
+  the file to contain [size(INPUT)-skip]/[D*sizeof(float)+gap] vectors.
+  If the option "--lshkit" is specified, the initial 3*sizeof(int)
+  bytes are interpreted as three 32-bit integers: sizeof(float), number
+  of vectors in the file and the dimension.  The program then sets D =
+  dimension, skip = 3 * sizeof(int) and gap = 0.
+
+Output Format:
+  Each input vector is assigned an serial ID (0, 1, ...) according to
+  the order they appear in the input.  Each output line contains the ID
+  of a point followed by the K IDs of its nearest neighbor.
+
+Control:
+  To measure the accuracy of the algorithm, <control> points are randomly
+  sampled, and their k-nearest neighbors are found with brute-force
+  search.  The control is then used to measure the recall, i.e., average rate
+  of true k-nearest neighbors found for every point.
+
+Progress Report:
+  The following parameters are reported after each iteration:
+  update: update rate of the K * N result entries.
+  recall: estimated recall, or 0 if no control is specified.
+  cost: number of similarity evaluate / [N*(N-1)/2, the brute force cost].
+
+The following hidden options are also supported for the experts to
+fine-tune the algorithm:
+
+-I [ --iteration ] arg (=100)   Maximal number of iterations allowed.
+-S [ --rho ] arg (=1.0)         Sample rate.  Use 1.0 for slow & accurate
+                                configuration and 0.5 for fast & less-accurate
+                                configuration.  See Section 2.5 of the paper
+                                for more information.  The effect of the
+                                "--fast" options is to change the default
+                                value of "-S" to 0.5.
+-T [ --delta] arg (=0.001)      Termination threshold T. See Section 2.6 of
+                                the paper for more information.
+
+4. Using the Library
+
+To use the library, copy all the header files to where your C++ compiler
+can find them and include <nndes.h> in your source code.  The library is
+header only and nothing extra needs to be linked against your application.
+
+The main interface is the class nndes::NNDescent, which is explained
+below.
+
+namespace nndes {
+    template <typename ORACLE> class NNDescent {
+        ...
+    public:
+        NNDescent (int N, int K, float S, ORACLE const &oracle_); //
+        The constructor.  //      N:      number of objects, //      K:
+        # nearest neighbors to find //      S:      sample rate.  See
+        Section 2.5 of the paper //      oracle: the similarity oracle.
+        For any 0 <= i, j < N, //              (float)oracle(i,j) should
+        return the similarity between //              the i-th and j-th
+        objects.  Smaller value means higher //              similarity.
+
+        int iterate (); // Run one iteration.  // There are K * N entries
+        in the results, and the return value // is how many of these
+        entries are improved.
+
+        const vector<KNN> &getNN () const; // Get the current results.
+        The vector has N entries, one for each object.
+
+        long long int getCost () const; // Get the current cost, i.e.,
+        the number of invocation of the similarity oracle // since the
+        NNDescent object is created.
+    };
+
+    typedef vector<KNNEntry> KNN;
+
+    struct KNNEntry {
+        int key;        // from 0 to N - 1 float dist;     // similarity
+        value returned by the oracle
+    };
+}
+
+Following is how the class NNDescent is typicall used:
+
+    // declare oracle class class MyOracle {
+        vector<Object> objects;
+    public:
+        MyOracle (...) {
+            ... // load objects
+        }
+
+        float operator (int i, int j) const {
+            return distance between objects[i] and objects[j];
+        }
+    };
+
+    MyOracle oracle(...); NNDescent nndes(N, K, S, oracle);
+
+    for (;;) {
+        int up = nndes.iterate(); if (up < N * K * delta) break; //
+        probably do something with the partial result nndes.getNN() //
+        or report cost nndes.getCost()
+    }
+
+    vector<KNN> const &result = nndes.getNN();
+
+    ... // do something with the final result.
+
+5. Sample Datasets
+
+Sample datasets in LSHKIT format can be downloaded at 
+    http://www.cs.princeton.edu/~wdong/data/
+See the paper for details about the datasets.
+
+6. Known Bugs
+
+7. Contact
+
+Please contact the author for problems and bug report.
+
+8. Reference
+
+[1] Wei Dong, Charikar Moses, and Kai Li. 2011. Efficient k-nearest
+neighbor graph construction for generic similarity measures. In
+Proceedings of the 20th international conference on World wide web (WWW
+'11). ACM, New York, NY, USA, 577-586.
+
