@@ -223,7 +223,11 @@ int main (int argc, char *argv[]) {
     cout.precision(5);
     cout.setf(ios::fixed);
     for (int it = 0; it < I; ++it) {
-        int t = nndes.iterate();
+
+	Timer iter_timer;
+	iter_timer.tick();
+
+    	int t = nndes.iterate();
         float rate = float(t) / (K * data.size());
 
         float recall = 0;
@@ -236,7 +240,8 @@ int main (int argc, char *argv[]) {
             recall /= control;
         }
         cout << setw(2) << it << " update:" << rate << " recall:" << recall << " cost:" << float(nndes.getCost())/total  << endl;
-        if (rate < T) break;
+	iter_timer.tuck("iteration time ");
+	if (rate < T) break;
     }
 
     cout << boost::format("Construction time: %1%s.") % timer.tuck(0) << endl;
