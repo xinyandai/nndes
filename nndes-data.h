@@ -228,6 +228,34 @@ float OracleL2<M>::operator () (int i, int j) const {
     return sqrt(r);
 }
 
+
+template <typename M>
+class OracleAngular {
+    const M &m;
+public:
+    OracleAngular (const M &m_): m(m_) {}
+    float operator () (int i, int j) const __attribute__ ((noinline));
+};
+
+template <typename M>
+float OracleAngular<M>::operator () (int i, int j) const {
+    const typename M::value_type *first1 = m[i];
+    const typename M::value_type *first2 = m[j];
+    float dist_  = 0.0;
+    float norm_1 = 0.0;
+    float norm_2 = 0.0;
+    for (int i = 0; i < m.getDim(); ++i)
+    {
+	dist_  += first1[i] * first2[i];
+	norm_1 += first1[i] * first1[i];
+	norm_2 += first2[i] * first2[i];
+
+    }
+    float angle =  acos( dist_ / std::sqrt(norm_1*norm_2) );
+    return angle;
+}
+
+
 typedef Dataset<float> FloatDataset;
 
 }

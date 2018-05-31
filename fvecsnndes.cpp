@@ -143,7 +143,8 @@ int main (int argc, char *argv[]) {
 
     omp_set_num_threads(num_thread);
 
-    OracleL2<FloatDataset> oracle(data);
+//    OracleL2<FloatDataset> oracle(data);
+    OracleAngular<FloatDataset> oracle(data);
 
     if (noise != 0) {
         tr1::ranlux64_base_01 rng;
@@ -220,7 +221,8 @@ int main (int argc, char *argv[]) {
     timer.tick();
 
 
-    NNDescent<OracleL2<FloatDataset> > nndes(N, K, S, oracle, GRAPH_BOTH);
+    //NNDescent<OracleL2<FloatDataset> > nndes(N, K, S, oracle, GRAPH_BOTH);
+    NNDescent<OracleAngular<FloatDataset> > nndes(N, K, S, oracle, GRAPH_BOTH);
 
     float total = float(N) * (N - 1) / 2;
     cout.precision(5);
