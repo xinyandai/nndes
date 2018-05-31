@@ -39,7 +39,7 @@ public:
         diff = (end.tv_sec - start.tv_sec) 
                 + (end.tv_usec - start.tv_usec) * 0.000001; 
         if (msg != 0) {
-            std::cout << msg << ':' <<  diff << std::endl;
+            std::cout << msg << ':' <<  diff << "s\n";
         }
         return diff;
     }
@@ -175,6 +175,8 @@ int main (int argc, char *argv[]) {
 
     if (control > 0) {
         cerr << "Generating control points..." << endl;
+        Timer prep_timer;
+        prep_timer.tick();
         // random sample control points
         control_index.resize(data.size());
         {
@@ -209,6 +211,7 @@ int main (int argc, char *argv[]) {
                 p[j] = knns[i][j].key;
             }
         }
+        prep_timer.tuck("preprocess timer");
     }
 
     cerr << "Starting NN-Descent..." << endl;
@@ -228,6 +231,7 @@ int main (int argc, char *argv[]) {
 	iter_timer.tick();
 
     	int t = nndes.iterate();
+	    float iter_time = iter_timer.tuck(0);
         float rate = float(t) / (K * data.size());
 
         float recall = 0;
@@ -240,7 +244,7 @@ int main (int argc, char *argv[]) {
             recall /= control;
         }
         cout << setw(2) << it << " update:" << rate << " recall:" << recall << " cost:" << float(nndes.getCost())/total  << endl;
-	iter_timer.tuck("iteration time ");
+        std::cout << "iteration time " << ':' <<  iter_time << " seconds\n";
 	if (rate < T) break;
     }
 
